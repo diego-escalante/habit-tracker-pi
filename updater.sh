@@ -24,11 +24,11 @@ while true; do
         echo "Habit Tracker is up to date."
     elif [ $LOCAL = $BASE ]; then
         echo "Found update. Stopping Habit Tracker in order to perform upgrade."
-        sudo journalctl stop habit-tracker.service
+        sudo systemctl stop habit-tracker.service
         echo "Pulling latest changes!"
         git merge FETCH_HEAD
         echo "Habit Tracker has been updated! Restarting Habit Tracker."
-        sudo journalctl start habit-tracker.service
+        sudo systemctl start habit-tracker.service
 	echo "Restarting Updater."
         exit
     elif [ $REMOTE = $BASE ]; then
