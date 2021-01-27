@@ -1,0 +1,12 @@
+[Unit]
+Description=Habit Tracker Updater
+After=network.target
+
+[Service]
+ExecStart=/opt/habit-tracker-pi/updater.sh
+WorkingDirectory=/opt/habit-tracker-pi
+RestartSec=5s
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
