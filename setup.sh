@@ -28,3 +28,7 @@ sudo systemctl stop habit-tracker.service
 sudo cp daemons/habit-tracker.service /etc/systemd/system/
 sudo systemctl enable habit-tracker.service
 sudo systemctl start habit-tracker.service
+
+# Clean up excess logs every day
+echo "Setting up log cleanup cron"
+crontab -l | { sed '/journalctl --vacuum-size=128M/d'; echo "0 0 * * * journalctl --vacuum-size=128M"; } | crontab -
