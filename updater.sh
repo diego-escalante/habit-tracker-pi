@@ -2,6 +2,8 @@
 
 cd "$(dirname "$0")"
 
+echo "Started Updater."
+
 while true; do
     sleep 5
     echo "Checking for Habit Tracker updates..."
@@ -24,11 +26,11 @@ while true; do
         echo "Habit Tracker is up to date."
     elif [ $LOCAL = $BASE ]; then
         echo "Found update. Stopping Habit Tracker in order to perform upgrade."
-        sudo systemctl stop habit-tracker.service
+        systemctl stop habit-tracker.service
         echo "Pulling latest changes!"
         git merge FETCH_HEAD
-        echo "Habit Tracker has been updated! Restarting Habit Tracker."
-        sudo systemctl start habit-tracker.service
+        echo -e "Habit Tracker has been updated!\nRestarting Habit Tracker."
+        systemctl start habit-tracker.service
 	echo "Restarting Updater."
         exit
     elif [ $REMOTE = $BASE ]; then
