@@ -7,6 +7,7 @@ ExecStart=/usr/bin/python3 run.py -c
 WorkingDirectory=/opt/habit-tracker-pi
 RestartSec=5s
 Restart=always
+KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
