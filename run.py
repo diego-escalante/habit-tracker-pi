@@ -8,6 +8,7 @@
 import time
 from rpi_ws281x import PixelStrip, Color
 import argparse
+from gpiozero import Button
 
 # LED strip configuration:
 LED_COUNT = 144       # Number of LED pixels.
@@ -21,7 +22,7 @@ LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
 
 # Define functions which animate LEDs in various ways.
-def colorWipe(strip, color, wait_ms=50):
+def colorWipe(strip, color, wait_ms=10):
     """Wipe color across display a pixel at a time."""
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, color)
@@ -96,25 +97,28 @@ if __name__ == '__main__':
     # Intialize the library (must be called once before other functions).
     strip.begin()
 
+    # Set up GPIO buttons.
+    buttonRed = Button(23)
+    buttonGreen = Button(24)
+    buttonBlue = Button(25)
+
     print('Press Ctrl-C to quit.')
     if not args.clear:
         print('Use "-c" argument to clear LEDs on exit')
 
     try:
-
+        print("Started demo!", flush=True)
+        colorWipe(strip, Color(255, 0, 0))
         while True:
-            print('Color wipe animations.')
-            colorWipe(strip, Color(255, 0, 0))  # Red wipe
-            colorWipe(strip, Color(0, 255, 0))  # Blue wipe
-            colorWipe(strip, Color(0, 0, 255))  # Green wipe
-            print('Theater chase animations.')
-            theaterChase(strip, Color(127, 127, 127))  # White theater chase
-            theaterChase(strip, Color(127, 0, 0))  # Red theater chase
-            theaterChase(strip, Color(0, 0, 127))  # Blue theater chase
-            print('Rainbow animations.')
-            rainbow(strip)
-            rainbowCycle(strip)
-            theaterChaseRainbow(strip)
+            if buttonRed.is_pressed:
+                print("Setting strand to red!", flush=True)
+                colorWipe(strip, Color(255, 0, 0))
+            elif buttonGreen.is_pressed:
+                print("Setting strand to green!", flush=True)
+                colorWipe(strip, Color(0, 255, 0))
+            elif buttonBlue.is_pressed:
+                print("Setting strand to blue!", flush=True)
+                colorWipe(strip, Color(0, 0, 255))
 
     except KeyboardInterrupt:
         if args.clear:
