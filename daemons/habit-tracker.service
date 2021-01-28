@@ -3,7 +3,7 @@ Description=Habit Tracker
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python run.py
+ExecStart=/usr/bin/python3 run.py -c
 WorkingDirectory=/opt/habit-tracker-pi
 RestartSec=5s
 Restart=always

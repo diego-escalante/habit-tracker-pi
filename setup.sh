@@ -32,3 +32,6 @@ sudo systemctl start habit-tracker.service
 # Clean up excess logs every day
 echo "Setting up log cleanup cron"
 crontab -l | { sed '/journalctl --vacuum-size=128M/d'; echo "0 0 * * * journalctl --vacuum-size=128M"; } | crontab -
+
+# Install ws281x library
+sudo pip3 install rpi_ws281x==4.2.4
