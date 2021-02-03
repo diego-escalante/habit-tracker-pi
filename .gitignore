@@ -1,3 +1,4 @@
 __pycache__
 gpiozero.py
 rpi_ws281x.py
+habit-data.json

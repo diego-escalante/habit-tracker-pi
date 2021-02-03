@@ -15,19 +15,25 @@ LED_COUNT = 42        # Number of LED pixels.
 LED_PIN = 18          # GPIO pin connected to the pixels (18 uses PWM!).
 LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
 LED_DMA = 10          # DMA channel to use for generating signal (try 10)
-LED_BRIGHTNESS = 8    # Set to 0 for darkest and 255 for brightest
+LED_BRIGHTNESS = 1    # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False    # True to invert the signal (when using NPN transistor level shift)
 LED_CHANNEL = 0       # set to '1' for GPIOs 13, 19, 41, 45 or 53
 
 # Other Constants
+BUTTON_LEFT_GPIO_PIN = 23
+BUTTON_MIDDLE_GPIO_PIN = 24
+BUTTON_RIGHT_GPIO_PIN = 25
 HABIT_DATA_FILE = "habit-data.json"
 
 # Color Enum for easy color references.
 class Color(Enum):
     BLANK = rpi_ws281x.Color(0,0,0)
     RED = rpi_ws281x.Color(255,0,0)
+    YELLOW = rpi_ws281x.Color(255, 255, 0)
     GREEN = rpi_ws281x.Color(0, 255, 0)
+    CYAN = rpi_ws281x.Color(0, 255, 255)
     BLUE = rpi_ws281x.Color(0, 0, 255)
+    MAGENTA = rpi_ws281x.Color(255, 0, 255)
     WHITE = rpi_ws281x.Color(255, 255, 255)
 
 # LED array representing the colors of the display.
@@ -48,22 +54,49 @@ def clearLeds():
     global leds
     leds = [Color.BLANK] * LED_COUNT
 
+def displayLed(i):
+    strip.setPixelColor(i, leds[i].value)
+
 # Display the led colors on the strip.
 def displayLeds():
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, leds[i].value)
     strip.show()
 
-def drawMonth():
-    clearLeds()
+def wipeDisplayLeds(intervalMs=25):
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, leds[i].value)
+        strip.show()
+        time.sleep(intervalMs/1000)
 
+def setMonth():
+    clearLeds()
     offset = getOffsetOfMonth(selectedDay.year, selectedDay.month)
     days = getDaysOfMonth(selectedDay.year, selectedDay.month)
-    
+    print(habitData)
     for i in range(offset, days + offset):
-        leds[i] = Color.WHITE
-    
-    displayLeds()
+        leds[i] = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
+
+def getColorForDay(year, month, day):
+    year = str(year)
+    month = str(month)
+    day = str(day)
+
+    if year in habitData and month in habitData[year] and day in habitData[year][month]:
+        status = habitData[year][month][day]
+        if status == "GOOD":
+            return Color.GREEN
+        elif status == "BAD":
+            return Color.RED
+        elif status == "NEUTRAL":
+            return Color.CYAN
+        else:
+            print("WARNING! Unknown habit status for " + year + "-" + month + "-" + day, flush=True)
+            return Color.YELLOW
+    return Color.WHITE
+
+def getLedForSelectedDay():
+    return getOffsetOfMonth(selectedDay.year, selectedDay.month) + selectedDay.day - 1
 
 # Returns the total number of days in the given month.
 def getDaysOfMonth(year, month):
@@ -75,16 +108,12 @@ def getOffsetOfMonth(year, month):
     return calendar.monthrange(selectedDay.year, selectedDay.month)[0] + 1 % 7
 
 # Lights up red, green, and blue LEDs in order.
-def testDisplay(intervalTimeMs=50, waitTimeMs=1000):
-    primaries = [Color.RED, Color.GREEN, Color.BLUE]
+def testDisplay():
+    primaries = [Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.WHITE, Color.BLANK]
     for primary in primaries:
         for i in range(strip.numPixels()):
             leds[i] = primary
-            displayLeds()
-            time.sleep(intervalTimeMs/1000)
-    time.sleep(waitTimeMs/1000)
-    clearLeds()
-    displayLeds()
+        wipeDisplayLeds()
 
 # Sets selectedDay to the current local day.
 def setSelectedDayToNow():
@@ -94,7 +123,14 @@ def setSelectedDayToNow():
 # Shifts selectedDay by the delta number of days.
 def shiftSelectedDay(delta):
     global selectedDay
+
+    month = selectedDay.month
+    leds[getLedForSelectedDay()] = getColorForDay(selectedDay.year, month, selectedDay.day)
     selectedDay += datetime.timedelta(days=delta)
+    if month != selectedDay.month:
+        setMonth()
+    leds[getLedForSelectedDay()] = Color.BLANK
+    displayLeds()
 
 def readHabitData():
     global habitData
@@ -110,45 +146,99 @@ def writeHabitData():
             json.dump(habitData, file)
     except OSError:
         print("OSError: Unable to open file " + HABIT_DATA_FILE, flush=True)
-    
+
+
+
+def leftPressed():
+    shiftSelectedDay(-1)
+    global timestamp
+    timestamp = datetime.datetime.now()
+
+def middlePressed():
+    pass
+
+def rightPressed():
+    shiftSelectedDay(1)
+    global timestamp
+    timestamp = datetime.datetime.now()
+
+def leftHeld():
+    buttonLeft.hold_time = 0.1
+    leftPressed()
+
+def middleHeld():
+    buttonMiddle.hold_time = 0.1
+    middlePressed()
+
+def rightHeld():
+    buttonRight.hold_time = 0.1
+    rightPressed()
+
+def leftReleased():
+    buttonLeft.hold_time = 1
+
+def middleReleased():
+    buttonMiddle.hold_time = 1
+
+def rightReleased():
+    buttonRight.hold_time = 1
+
+# Sets up the GPIO Buttons.
+def setupButtons():
+    global buttonLeft, buttonMiddle, buttonRight
+    buttonLeft = Button(BUTTON_LEFT_GPIO_PIN)
+    buttonMiddle = Button(BUTTON_MIDDLE_GPIO_PIN)
+    buttonRight = Button(BUTTON_RIGHT_GPIO_PIN)
+
+    buttonLeft.when_pressed = leftPressed
+    buttonMiddle.when_pressed = middlePressed
+    buttonRight.when_pressed = rightPressed
+
+    buttonLeft.when_held = leftHeld
+    buttonMiddle.when_held = middleHeld
+    buttonRight.when_held = rightHeld
+
+    buttonLeft.when_released = leftReleased
+    buttonMiddle.when_released = middleReleased
+    buttonRight.when_released = rightReleased
+
+    buttonLeft.hold_time = 1
+    buttonMiddle.hold_time = 1
+    buttonRight.hold_time = 1
+
+    buttonLeft.hold_repeat = True
+    buttonMiddle.hold_repeat = True
+    buttonRight.hold_repeat = True
 
 def main():
+    global timestamp
+    timestamp = datetime.datetime.now()
     try:
+        # Set up GPIO Buttons.
+        setupButtons()
+#        testDisplay()
         readHabitData()
 
-        drawMonth()
-        shiftSelectedDay(-1)
-        drawMonth()
+        setMonth()
+        wipeDisplayLeds()
+
+        while True:
+            currentTime = datetime.datetime.now()
+            if timestamp + datetime.timedelta(milliseconds=250) > currentTime:
+                time.sleep(0.1)
+                continue
+            timestamp = currentTime
+            i = getLedForSelectedDay()
+            if leds[i] != Color.WHITE:
+                leds[i] = Color.WHITE
+            else:
+                leds[i] = Color.BLANK
+            displayLeds()
+            time.sleep(500/1000)
 
     except KeyboardInterrupt:
         clearLeds()
         displayLeds()
-
-    # testDisplay()
-
-
-    # Set up GPIO buttons.
-    # buttonRed = Button(23)
-    # buttonGreen = Button(24)
-    # buttonBlue = Button(25)
-
-    # # Main demo loop.
-    # try:
-    #     print("Started demo!", flush=True)
-    #     while True:
-    #         if buttonRed.is_pressed:
-    #             print("Setting strand to red!", flush=True)
-    #             # colorWipe(strip, Color(255, 0, 0))
-    #         elif buttonGreen.is_pressed:
-    #             print("Setting strand to green!", flush=True)
-    #             # colorWipe(strip, Color(0, 255, 0))
-    #         elif buttonBlue.is_pressed:
-    #             print("Setting strand to blue!", flush=True)
-    #             # colorWipe(strip, Color(0, 0, 255))
-
-    # # Always clear LEDs at the end.
-    # except KeyboardInterrupt:
-    #     colorWipe(strip, Color(0, 0, 0), 10)
 
 if __name__ == '__main__':
     main()
