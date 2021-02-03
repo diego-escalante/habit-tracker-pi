@@ -49,6 +49,8 @@ selectedDay = datetime.datetime.now()
 # Habit tracker data in JSON format.
 habitData = None
 
+lastInputTime = datetime.datetime.now()
+
 # Clears LEDs colors.
 def clearLeds():
     global leds
@@ -97,6 +99,7 @@ def getColorForDay(year, month, day):
     if relativeTime == -1:
         return Color.CYAN
     elif relativeTime == 0:
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
         return Color.RED
     else:
         return Color.WHITE
@@ -124,7 +127,16 @@ def testDisplay():
 # Sets selectedDay to the current local day.
 def setSelectedDayToNow():
     global selectedDay
+
+    year = selectedDay.year
+    month = selectedDay.month
+    leds[getLedForSelectedDay()] = getColorForDay(selectedDay.year, month, selectedDay.day)
+
     selectedDay = datetime.datetime.now()
+    if month != selectedDay.month or year != selectedDay.year:
+        setMonth()
+    leds[getLedForSelectedDay()] = Color.BLANK
+    displayLeds()
 
 # Shifts selectedDay by the delta number of days.
 def shiftSelectedDay(delta):
@@ -176,8 +188,9 @@ def writeHabitData(year, month, day, status):
 
 def leftPressed():
     shiftSelectedDay(-1)
-    global timestamp
+    global timestamp, lastInputTime
     timestamp = datetime.datetime.now()
+    lastInputTime = datetime.datetime.now()
 
 def middlePressed():
     color = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
@@ -195,8 +208,9 @@ def middlePressed():
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
     leds[getLedForSelectedDay()] = color
     displayLed(getLedForSelectedDay())
-    global timestamp
+    global timestamp, lastInputTime
     timestamp = datetime.datetime.now()
+    lastInputTime = datetime.datetime.now()
 
 def isPastPresentOrFuture(inputDay):
     currentDay = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -211,8 +225,9 @@ def isPastPresentOrFuture(inputDay):
 
 def rightPressed():
     shiftSelectedDay(1)
-    global timestamp
+    global timestamp, lastInputTime
     timestamp = datetime.datetime.now()
+    lastInputTime = datetime.datetime.now()
 
 def leftHeld():
     buttonLeft.hold_time = 0.1
@@ -268,7 +283,7 @@ def main():
     try:
         # Set up GPIO Buttons.
         setupButtons()
-#        testDisplay()
+        testDisplay()
         readHabitData()
 
         setMonth()
@@ -280,6 +295,11 @@ def main():
                 time.sleep(0.1)
                 continue
             timestamp = currentTime
+
+            # If it's been a while since last button input and a non-present day is selected, reset to that.
+            if isPastPresentOrFuture(selectedDay) != 0 and lastInputTime + datetime.timedelta(seconds=30) < currentTime:
+                setSelectedDayToNow()
+
             i = getLedForSelectedDay()
             if leds[i] == Color.BLANK:
                 leds[i] = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
