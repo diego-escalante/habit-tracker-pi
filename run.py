@@ -56,6 +56,7 @@ def clearLeds():
 
 def displayLed(i):
     strip.setPixelColor(i, leds[i].value)
+    strip.show()
 
 # Display the led colors on the strip.
 def displayLeds():
@@ -73,15 +74,13 @@ def setMonth():
     clearLeds()
     offset = getOffsetOfMonth(selectedDay.year, selectedDay.month)
     days = getDaysOfMonth(selectedDay.year, selectedDay.month)
-    print(habitData)
     for i in range(offset, days + offset):
-        leds[i] = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
+        leds[i] = getColorForDay(selectedDay.year, selectedDay.month, i + 1 - offset)
 
 def getColorForDay(year, month, day):
     year = str(year)
     month = str(month)
     day = str(day)
-
     if year in habitData and month in habitData[year] and day in habitData[year][month]:
         status = habitData[year][month][day]
         if status == "GOOD":
@@ -229,11 +228,11 @@ def main():
                 continue
             timestamp = currentTime
             i = getLedForSelectedDay()
-            if leds[i] != Color.WHITE:
-                leds[i] = Color.WHITE
+            if leds[i] == Color.BLANK:
+                leds[i] = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
             else:
                 leds[i] = Color.BLANK
-            displayLeds()
+            displayLed(i)
             time.sleep(500/1000)
 
     except KeyboardInterrupt:
