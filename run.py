@@ -92,7 +92,14 @@ def getColorForDay(year, month, day):
         else:
             print("WARNING! Unknown habit status for " + year + "-" + month + "-" + day, flush=True)
             return Color.YELLOW
-    return Color.WHITE
+
+    relativeTime = isPastPresentOrFuture(datetime.datetime(year=int(year), month=int(month), day=int(day)))
+    if relativeTime == -1:
+        return Color.CYAN
+    elif relativeTime == 0:
+        return Color.RED
+    else:
+        return Color.WHITE
 
 def getLedForSelectedDay():
     return getOffsetOfMonth(selectedDay.year, selectedDay.month) + selectedDay.day - 1
@@ -125,7 +132,15 @@ def shiftSelectedDay(delta):
 
     month = selectedDay.month
     leds[getLedForSelectedDay()] = getColorForDay(selectedDay.year, month, selectedDay.day)
-    selectedDay += datetime.timedelta(days=delta)
+
+    newDay = selectedDay + datetime.timedelta(days=delta)
+    if isPastPresentOrFuture(newDay) == 1:
+        leds[getLedForSelectedDay()] = Color.BLANK
+        displayLed(getLedForSelectedDay())
+        return
+
+    selectedDay = newDay
+
     if month != selectedDay.month:
         setMonth()
     leds[getLedForSelectedDay()] = Color.BLANK
@@ -139,13 +154,24 @@ def readHabitData():
     except OSError:
         print("OSError: Unable to open file " + HABIT_DATA_FILE, flush=True)
 
-def writeHabitData():
+def writeHabitData(year, month, day, status):
+    global habitData
+    year = str(year)
+    month = str(month)
+    day = str(day)
+
+    if year not in habitData:
+        habitData[year] = {}
+    if month not in habitData[year]:
+        habitData[year][month] = {}
+
+    habitData[year][month][day] = status
+
     try:
         with open(HABIT_DATA_FILE, mode="w", encoding="utf-8") as file:
             json.dump(habitData, file)
     except OSError:
         print("OSError: Unable to open file " + HABIT_DATA_FILE, flush=True)
-
 
 
 def leftPressed():
@@ -154,7 +180,34 @@ def leftPressed():
     timestamp = datetime.datetime.now()
 
 def middlePressed():
-    pass
+    color = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
+    if color == Color.WHITE:
+        color = Color.GREEN
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
+    elif color == Color.GREEN:
+        color = Color.RED
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
+    elif color == Color.RED:
+        color = Color.CYAN
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "NEUTRAL")
+    elif color == Color.CYAN:
+        color = Color.GREEN
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
+    leds[getLedForSelectedDay()] = color
+    displayLed(getLedForSelectedDay())
+    global timestamp
+    timestamp = datetime.datetime.now()
+
+def isPastPresentOrFuture(inputDay):
+    currentDay = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    inputDay = inputDay.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if inputDay < currentDay:
+        return -1
+    elif inputDay > currentDay:
+        return 1
+    else:
+        return 0
 
 def rightPressed():
     shiftSelectedDay(1)
