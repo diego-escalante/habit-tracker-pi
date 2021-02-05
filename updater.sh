@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 echo "Started Updater."
 
 while true; do
-    sleep 300
+    sleep 1800
     echo "Checking for Habit Tracker updates..."
 
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
