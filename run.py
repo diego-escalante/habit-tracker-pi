@@ -90,14 +90,14 @@ def getColorForDay(year, month, day):
         elif status == "BAD":
             return Color.RED
         elif status == "NEUTRAL":
-            return Color.CYAN
+            return Color.BLUE
         else:
             print("WARNING! Unknown habit status for " + year + "-" + month + "-" + day, flush=True)
             return Color.YELLOW
 
     relativeTime = isPastPresentOrFuture(datetime.datetime(year=int(year), month=int(month), day=int(day)))
     if relativeTime == -1:
-        return Color.CYAN
+        return Color.BLUE
     elif relativeTime == 0:
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
         return Color.RED
@@ -201,9 +201,9 @@ def middlePressed():
         color = Color.RED
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
     elif color == Color.RED:
-        color = Color.CYAN
+        color = Color.BLUE
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "NEUTRAL")
-    elif color == Color.CYAN:
+    elif color == Color.BLUE:
         color = Color.GREEN
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
     leds[getLedForSelectedDay()] = color
