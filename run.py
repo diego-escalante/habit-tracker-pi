@@ -7,8 +7,9 @@ import argparse
 from gpiozero import Button
 import calendar
 import datetime
-from enum import Enum
 import json
+from enum import Enum
+from enums import Color, Status
 
 # LED strip configuration.
 LED_COUNT = 42        # Number of LED pixels.
@@ -24,17 +25,6 @@ BUTTON_LEFT_GPIO_PIN = 23
 BUTTON_MIDDLE_GPIO_PIN = 24
 BUTTON_RIGHT_GPIO_PIN = 25
 HABIT_DATA_FILE = "habit-data.json"
-
-# Color Enum for easy color references.
-class Color(Enum):
-    BLANK = rpi_ws281x.Color(0,0,0)
-    RED = rpi_ws281x.Color(255,0,0)
-    YELLOW = rpi_ws281x.Color(255, 255, 0)
-    GREEN = rpi_ws281x.Color(0, 255, 0)
-    CYAN = rpi_ws281x.Color(0, 255, 255)
-    BLUE = rpi_ws281x.Color(0, 0, 255)
-    MAGENTA = rpi_ws281x.Color(255, 0, 255)
-    WHITE = rpi_ws281x.Color(255, 255, 255)
 
 # LED array representing the colors of the display.
 leds = [Color.BLANK] * LED_COUNT
@@ -56,17 +46,36 @@ def clearLeds():
     global leds
     leds = [Color.BLANK] * LED_COUNT
 
+def isSleepTime():
+    beginTime = datetime.time(hour=23)
+    endTime = datetime.time(hour=6)
+    currentTime = datetime.datetime.now().time()
+
+    if beginTime < endTime:
+        return currentTime >= beginTime and currentTime <= endTime
+    else: # crosses midnight
+        return currentTime >= beginTime or currentTime <= endTime
+
+def setStripBrightness():
+    if (isSleepTime() and lastInputTime + datetime.timedelta(seconds=30) < datetime.datetime.now()):
+        strip.setBrightness(0)
+    else:
+        strip.setBrightness(1)
+
 def displayLed(i):
+    setStripBrightness()
     strip.setPixelColor(i, leds[i].value)
     strip.show()
 
 # Display the led colors on the strip.
 def displayLeds():
+    setStripBrightness()
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, leds[i].value)
     strip.show()
 
 def wipeDisplayLeds(intervalMs=25):
+    setStripBrightness()
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, leds[i].value)
         strip.show()
@@ -85,11 +94,11 @@ def getColorForDay(year, month, day):
     day = str(day)
     if year in habitData and month in habitData[year] and day in habitData[year][month]:
         status = habitData[year][month][day]
-        if status == "GOOD":
+        if status == Status.GOOD.value:
             return Color.GREEN
-        elif status == "BAD":
+        elif status == Status.BAD.value:
             return Color.RED
-        elif status == "NEUTRAL":
+        elif status == Status.NEUTRAL.value:
             return Color.CYAN
         else:
             print("WARNING! Unknown habit status for " + year + "-" + month + "-" + day, flush=True)
@@ -99,7 +108,7 @@ def getColorForDay(year, month, day):
     if relativeTime == -1:
         return Color.CYAN
     elif relativeTime == 0:
-        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, Status.BAD.value)
         return Color.RED
     else:
         return Color.WHITE
@@ -194,18 +203,15 @@ def leftPressed():
 
 def middlePressed():
     color = getColorForDay(selectedDay.year, selectedDay.month, selectedDay.day)
-    if color == Color.WHITE:
-        color = Color.GREEN
-        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
-    elif color == Color.CYAN:
+    if color == Color.CYAN:
         color = Color.RED
-        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, Status.BAD.value)
     elif color == Color.GREEN:
         color = Color.CYAN
-        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "NEUTRAL")
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, Status.NEUTRAL.value)
     elif color == Color.RED:
         color = Color.GREEN
-        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
+        writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, Status.GOOD.value)
     leds[getLedForSelectedDay()] = color
     displayLed(getLedForSelectedDay())
     global timestamp, lastInputTime
