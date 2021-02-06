@@ -197,13 +197,13 @@ def middlePressed():
     if color == Color.WHITE:
         color = Color.GREEN
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
-    elif color == Color.GREEN:
+    elif color == Color.CYAN:
         color = Color.RED
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "BAD")
-    elif color == Color.RED:
+    elif color == Color.GREEN:
         color = Color.CYAN
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "NEUTRAL")
-    elif color == Color.CYAN:
+    elif color == Color.RED:
         color = Color.GREEN
         writeHabitData(selectedDay.year, selectedDay.month, selectedDay.day, "GOOD")
     leds[getLedForSelectedDay()] = color
