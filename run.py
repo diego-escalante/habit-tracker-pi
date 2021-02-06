@@ -8,7 +8,6 @@ from gpiozero import Button
 import calendar
 import datetime
 import json
-from enum import Enum
 from enums import Color, Status
 
 # LED strip configuration.
@@ -74,7 +73,7 @@ def displayLeds():
         strip.setPixelColor(i, leds[i].value)
     strip.show()
 
-def wipeDisplayLeds(intervalMs=25):
+def wipeDisplayLeds(intervalMs=15):
     setStripBrightness()
     for i in range(strip.numPixels()):
         strip.setPixelColor(i, leds[i].value)
@@ -127,7 +126,7 @@ def getOffsetOfMonth(year, month):
 
 # Lights up red, green, and blue LEDs in order.
 def testDisplay():
-    primaries = [Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.WHITE, Color.BLANK]
+    primaries = [Color.RED, Color.GREEN, Color.BLUE, Color.BLANK]
     for primary in primaries:
         for i in range(strip.numPixels()):
             leds[i] = primary
@@ -190,7 +189,7 @@ def writeHabitData(year, month, day, status):
 
     try:
         with open(HABIT_DATA_FILE, mode="w", encoding="utf-8") as file:
-            json.dump(habitData, file)
+            json.dump(habitData, file, indent=2, sort_keys=True)
     except OSError:
         print("OSError: Unable to open file " + HABIT_DATA_FILE, flush=True)
 
