@@ -123,7 +123,7 @@ def getDaysOfMonth(year, month):
 # Returns the weekday offset of the month. Sunday is 0, Saturday is 6. (i.e. if the month starts on a tuesday, return 2.)
 def getOffsetOfMonth(year, month):
     # Python considers Monday as day 0, so shift weekday value up by one, looping back to 0 in the case of Sunday.
-    return calendar.monthrange(selectedDay.year, selectedDay.month)[0] + 1 % 7
+    return (calendar.monthrange(selectedDay.year, selectedDay.month)[0] + 1) % 7
 
 # Lights up red, green, and blue LEDs in order.
 def testDisplay():
