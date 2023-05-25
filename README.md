@@ -2,8 +2,8 @@
 
 <p align="center">
   <picture>
-    <source srcset="../assets/demo.gif?raw=true">
-    <img alt="Shows a gif with a demo of the habit tracker." src="../assets/demo.gif?raw=true">
+    <source srcset="../assets/tracker.png?raw=true">
+    <img alt="Shows a picture of the habit tracker." src="../assets/traker.png?raw=true">
   </picture>
 </p>
 
