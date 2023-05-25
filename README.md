@@ -1,5 +1,22 @@
 # Habit Tracker Pi
-A Habit Tracker that runs on a Raspberry Pi. It is a Python program that controls a strip of LEDs connected to the Pi in the configuration of a calendar-month, which light up in various colors to keep track of the current month, day, and display a history of successes and failures of previous days. Three physical buttons can be pressed to control, view, and change the color-status of any day in the past. It saves the state every time a change is made, so if it loses and regains power, it will automatically start up again and load up the past history.
+
+<p align="center">
+  <picture>
+    <source srcset="../assets/demo.gif?raw=true">
+    <img alt="Shows a gif with a demo of the habit tracker." src="../assets/demo.gif?raw=true">
+  </picture>
+</p>
+
+A Habit Tracker that runs on a Raspberry Pi. It is a Python program that controls a strip of LEDs connected to the Pi in the configuration of a 6x7 grid to display a calendar month.
+
+## Features
+* Automatically boots up the python program when the Pi is turned on.
+* Automatically display the current month and day.
+* Button input allows the user to change the color status of the currently selected day (RED, GREEN, CYAN).
+* Button inputs allow the user to scroll through past days, allowing the user to see historical data months and years in the past.
+* Day states are automatically saved. In case the Pi loses power, no data is lost and the Pi will automatically load it all back in next time it is turned on.
+* Turns off LEDs during sleep hours to save power and not emit light. The user can tap on a button to temporarily turn on the display.
+* Automatically pulls updates from the internet and restarts the tracker.
 
 ## Setup
 1. From your Raspberry Pi, clone this repo.
